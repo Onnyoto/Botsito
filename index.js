@@ -1,10 +1,14 @@
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
-const token = "NjkzMjI0NTI5NzAyNDIwNTUw.Xn-Jlg.jtClha0hMY3uwErh0SVD0chhVqE";
+const {google} = require('googleapis');
+const youtube = google.youtube({
+  version: 'v3',
+  auth: 'AIzaSyBpbeLZToOqnOSw7g0LqIh0gdtJUTl-3L0'
+});
+
+const token = "NjkzMjI0NTI5NzAyNDIwNTUw.Xn-x4w.s-CfNQrH2OjuxUl4uYLlksiyj0w";
 const prefix = "/";
-
 const client = new Discord.Client();
-
 const queue = new Map();
 
 client.once("ready", () => {
@@ -41,7 +45,7 @@ client.on("message", async message => {
 
 async function execute(message, serverQueue) {
   const args = message.content.split(" ");
-
+  
   const voiceChannel = message.member.voice.channel;
   if (!voiceChannel)
     return message.channel.send(
@@ -54,7 +58,13 @@ async function execute(message, serverQueue) {
     );
   }
 
-  const songInfo = await ytdl.getInfo(args[1]);
+  const searchResponse = await youtube.search.list({part: 'id',q: args[1], type: 'video', order: 'viewCount'});
+  if (searchResponse.status !== 200) {
+    message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
+    throw searchResponse.statusText;
+  }
+  const url = `https://www.youtube.com/watch?v=${searchResponse.data.items[0].id.videoId}`;
+  const songInfo = await ytdl.getInfo(url);
   const song = {
     title: songInfo.title,
     url: songInfo.video_url
