@@ -45,7 +45,7 @@ client.on("message", async message => {
 });
 
 async function execute(message, serverQueue) {
-  const args = message.content.split(" ");
+  const songQuery = message.content.slice(6);
   
   const voiceChannel = message.member.voice.channel;
   if (!voiceChannel)
@@ -59,7 +59,7 @@ async function execute(message, serverQueue) {
     );
   }
 
-  const searchResponse = await youtube.search.list({part: 'id',q: args[1], type: 'video', order: 'viewCount'});
+  const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance'});
   if (searchResponse.status !== 200) {
     message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
     throw searchResponse.statusText;
