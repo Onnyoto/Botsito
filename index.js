@@ -1,12 +1,13 @@
+require('dotenv').config();
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
 const {google} = require('googleapis');
 const youtube = google.youtube({
   version: 'v3',
-  auth: 'AIzaSyBpbeLZToOqnOSw7g0LqIh0gdtJUTl-3L0'
+  auth: process.env.YOUTUBE_API_KEY
 });
 
-const token = "NjkzMjI0NTI5NzAyNDIwNTUw.Xn-x4w.s-CfNQrH2OjuxUl4uYLlksiyj0w";
+const token = process.env.DISCORD_TOKEN;
 const prefix = "/";
 const client = new Discord.Client();
 const queue = new Map();
