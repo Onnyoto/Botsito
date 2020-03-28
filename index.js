@@ -59,12 +59,19 @@ async function execute(message, serverQueue) {
     );
   }
 
-  const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance'});
-  if (searchResponse.status !== 200) {
-    message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
-    throw searchResponse.statusText;
+  let url = '';
+  const regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
+  if (regex.test(songQuery)) {
+    url = songQuery;
+  } else {
+    const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance'});
+    url = `https://www.youtube.com/watch?v=${searchResponse.data.items[0].id.videoId}`;
+    if (searchResponse.status !== 200) {
+      message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
+      throw searchResponse.statusText;
+    }
   }
-  const url = `https://www.youtube.com/watch?v=${searchResponse.data.items[0].id.videoId}`;
+  
   const songInfo = await ytdl.getInfo(url);
   const song = {
     title: songInfo.title,
