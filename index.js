@@ -64,7 +64,7 @@ async function execute(message, serverQueue) {
   if (regex.test(songQuery)) {
     url = songQuery;
   } else {
-    const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance'});
+    const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance', regionCode: 'CL'});
     url = `https://www.youtube.com/watch?v=${searchResponse.data.items[0].id.videoId}`;
     if (searchResponse.status !== 200) {
       message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
