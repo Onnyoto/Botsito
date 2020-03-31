@@ -45,7 +45,13 @@ client.on("message", async message => {
     radio(message, serverQueue);
     return;
   
-  } else {
+  } 
+    else if (message.content.startsWith(`${prefix}list`)){
+    list(message, serverQueue);
+      return;
+  }
+
+  else {
     message.channel.send("You need to enter a valid command!");
   }
 });
@@ -151,6 +157,7 @@ function play(guild, song) {
   dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
   serverQueue.textChannel.send(`Start playing: **${song.title}**`);
 
+
 }
 async function radio(message, serverQueue){
   if(serverQueue){
@@ -167,7 +174,7 @@ async function radio(message, serverQueue){
       "Dame permiso bebe!"
     );
   }
-  
+
   const songQuery = message.content.slice(7);
   let url = '';
   const regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
@@ -220,8 +227,21 @@ async function radio(message, serverQueue){
     return message.channel.send(err);
   }
 
-
   return;
+
+}
+
+function list(message, serverQueue){
+
+  const playlist = ["Playlist : "];
+  for (const song of serverQueue.songs) {
+
+    playlist.push(`\n:musical_note: **${song.title}**`);
+    
+  }
+  if(serverQueue){
+    message.channel.send(playlist);
+  }
 }
 
 client.login(token);
