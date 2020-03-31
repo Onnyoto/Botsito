@@ -30,6 +30,7 @@ client.on("message", async message => {
 
   const serverQueue = queue.get(message.guild.id);
 
+
   if (message.content.startsWith(`${prefix}play`)) {
     execute(message, serverQueue);
     return;
@@ -39,6 +40,11 @@ client.on("message", async message => {
   } else if (message.content.startsWith(`${prefix}stop`)) {
     stop(message, serverQueue);
     return;
+  }
+    else if (message.content.startsWith(`${prefix}radio`)){
+    radio(message, serverQueue);
+    return;
+  
   } else {
     message.channel.send("You need to enter a valid command!");
   }
@@ -75,7 +81,8 @@ async function execute(message, serverQueue) {
   const songInfo = await ytdl.getInfo(url);
   const song = {
     title: songInfo.title,
-    url: songInfo.video_url
+    url: songInfo.video_url,
+    relatedVideos : songInfo.related_videos
   };
 
   if (!serverQueue) {
@@ -143,6 +150,78 @@ function play(guild, song) {
     .on("error", error => console.error(error));
   dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
   serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+
+}
+async function radio(message, serverQueue){
+  if(serverQueue){
+    stop(message, serverQueue);
+  }
+  const voiceChannel = message.member.voice.channel;
+  if (!voiceChannel)
+    return message.channel.send(
+      "Unete al canal po wea"
+    );
+  const permissions = voiceChannel.permissionsFor(message.client.user);
+  if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+    return message.channel.send(
+      "Dame permiso bebe!"
+    );
+  }
+  
+  const songQuery = message.content.slice(7);
+  let url = '';
+  const regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
+  if (regex.test(songQuery)) {
+    url = songQuery;
+  } else {
+    const searchResponse = await youtube.search.list({part: 'id',q: songQuery, type: 'video', order: 'relevance', regionCode: 'CL'});
+    url = `https://www.youtube.com/watch?v=${searchResponse.data.items[0].id.videoId}`;
+    if (searchResponse.status !== 200) {
+      message.channel.send(`Ha ocurrido un error: ${searchResponse.status, searchResponse.statusText}`);
+      throw searchResponse.statusText;
+    }
+  }
+  
+  const songInfo = await ytdl.getInfo(url);
+  const song = {
+    title: songInfo.title,
+    url: songInfo.video_url,
+    relatedVideos : songInfo.related_videos
+  };
+  
+  const queueContruct = {
+    textChannel: message.channel,
+    voiceChannel: voiceChannel,
+    connection: null,
+    songs: [],
+    volume: 5,
+    playing: true
+  };
+
+  queue.set(message.guild.id, queueContruct);
+
+  queueContruct.songs.push(song);
+  for (const nextSong of song.relatedVideos) {
+    const nextUrl = `https://www.youtube.com/watch?v=${nextSong.id}`;
+    const songRadio = {
+      title: nextSong.title,
+      url: nextUrl
+    };
+    queueContruct.songs.push(songRadio);
+  }
+  console.log(queueContruct.songs);
+  try {
+    var connection = await voiceChannel.join();
+    queueContruct.connection = connection;
+    play(message.guild, queueContruct.songs[0]);
+  } catch (err) {
+    console.log(err);
+    queue.delete(message.guild.id);
+    return message.channel.send(err);
+  }
+
+
+  return;
 }
 
 client.login(token);
